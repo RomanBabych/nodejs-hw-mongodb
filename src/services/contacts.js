@@ -1,27 +1,28 @@
 import Contact from '../models/contactModel.js';
 
 export const getContacts = async () => {
-  try {
-    const contacts = await Contact.find();
-    return {
-      status: 200,
-      message: 'Successfully found contacts!',
-      data: contacts,
-    };
-  } catch (error) {
-    throw new Error('Error retrieving contacts: ' + error.message);
-  }
+  const contacts = await Contact.find();
+  return contacts;
 };
 
 export const getContactById = async (contactId) => {
-  try {
-    const contact = await Contact.findById(contactId);
-    if (contact) {
-      return contact;
-    } else {
-      return null;
-    }
-  } catch (error) {
-    throw new Error('Error retrieving contact: ' + error.message);
-  }
+  const contact = await Contact.findById(contactId);
+  return contact;
+};
+
+export const createContact = async (data) => {
+  const newContact = await Contact.create(data);
+  return newContact;
+};
+
+export const updateContact = async (contactId, data) => {
+  const updatedContact = await Contact.findByIdAndUpdate(contactId, data, {
+    new: true,
+  });
+  return updatedContact;
+};
+
+export const deleteContact = async (contactId) => {
+  const deletedContact = await Contact.findByIdAndDelete(contactId);
+  return deletedContact;
 };
