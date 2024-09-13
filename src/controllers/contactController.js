@@ -8,7 +8,23 @@ import {
 } from '../services/contacts.js';
 
 export const getContacts = async (req, res) => {
-  const result = await getContactsService();
+  const {
+    page = 1,
+    perPage = 10,
+    sortBy = 'name',
+    sortOrder = 'asc',
+    type,
+    isFavourite,
+  } = req.query;
+  const result = await getContactsService(
+    Number(page),
+    Number(perPage),
+    sortBy,
+    sortOrder,
+    type,
+    isFavourite,
+  );
+
   res.status(200).json({
     status: 200,
     message: 'Successfully found contacts!',
