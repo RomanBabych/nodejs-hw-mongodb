@@ -13,10 +13,11 @@ import {
   contactUpdateSchema,
 } from '../validation/contactValidation.js';
 import isValidId from '../middlewares/isValidId.js';
+import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', ctrlWrapper(getContacts));
+router.get('/', authMiddleware, ctrlWrapper(getContacts));
 router.get('/:contactId', isValidId, ctrlWrapper(getContactById));
 router.post('/', validateBody(contactSchema), ctrlWrapper(createContact));
 router.patch(

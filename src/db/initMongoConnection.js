@@ -2,12 +2,10 @@ import mongoose from 'mongoose';
 
 export const initMongoDB = async () => {
   try {
-    const user = process.env.MONGODB_USER;
-    const password = process.env.MONGODB_PASSWORD;
-    const url = process.env.MONGODB_URL;
-    const db = process.env.MONGODB_DB;
+    const { MONGODB_USER, MONGODB_PASSWORD, MONGODB_URL, MONGODB_DB } =
+      process.env;
 
-    const DB_HOST = `mongodb+srv://${user}:${password}@${url}/${db}?retryWrites=true&w=majority&appName=Cluster0`;
+    const DB_HOST = `mongodb+srv://${MONGODB_USER}:${MONGODB_PASSWORD}@${MONGODB_URL}/${MONGODB_DB}?retryWrites=true&w=majority&appName=Cluster0`;
 
     await mongoose.connect(DB_HOST);
     console.log('Mongodb connection successfully');
