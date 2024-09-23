@@ -43,6 +43,10 @@ export const loginUserService = async ({ email, password }) => {
     const { accessToken, refreshToken, refreshTokenValidUntil } =
       generateTokens(user._id);
 
+    if (!user._id) {
+      throw createError(400, 'User ID is invalid');
+    }
+
     await Session.findOneAndUpdate(
       { userId: user._id },
       {
@@ -62,6 +66,21 @@ export const loginUserService = async ({ email, password }) => {
         email: user.email,
       },
     };
+  } catch (error) {
+    console.error('Login error:', error);
+    throw createError(500, error.message);
+  }
+};
+
+export const logoutUserService = async (sessionId) => {
+  try {
+    const session = await Session.findByIdAndDelete(sessionId);
+
+    if (!session) {
+      throw createError(404, 'Session not found');
+    }
+
+    return session;
   } catch (error) {
     throw createError(500, error.message);
   }

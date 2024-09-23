@@ -1,17 +1,10 @@
 import jwt from 'jsonwebtoken';
 
-if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
-  throw new Error('Token secrets are not defined');
-}
-
 export const generateTokens = (userId) => {
   const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
   const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
-
-  console.log(ACCESS_TOKEN_SECRET);
-
   if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
-    throw new Error('Token secrets are not defined');
+    throw new Error('Token secrets must be defined before use');
   }
 
   const accessToken = jwt.sign({ userId }, ACCESS_TOKEN_SECRET, {
