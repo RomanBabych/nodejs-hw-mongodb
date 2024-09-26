@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import createError from 'http-errors';
 import bcrypt from 'bcrypt';
 import User from '../models/userModel.js';
@@ -29,59 +30,76 @@ export const registerUserService = async ({ name, email, password }) => {
 };
 
 export const loginUserService = async ({ email, password }) => {
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      throw createError(401, 'Invalid email or password');
-    }
+  const user = await User.findOne({ email });
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw createError(401, 'Invalid email or password');
-    }
-
-    const { accessToken, refreshToken, refreshTokenValidUntil } =
-      generateTokens(user._id);
-
-    if (!user._id) {
-      throw createError(400, 'User ID is invalid');
-    }
-
-    await Session.findOneAndUpdate(
-      { userId: user._id },
-      {
-        accessToken,
-        refreshToken,
-        refreshTokenValidUntil,
-      },
-      { upsert: true, new: true },
-    );
-
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    };
-  } catch (error) {
-    console.error('Login error:', error);
-    throw createError(500, error.message);
+  if (!user) {
+    throw createError(401, 'Invalid email or password');
   }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    throw createError(401, 'Invalid email or password');
+  }
+
+  await Session.findOneAndDelete({ userId: user._id });
+
+  const {
+    accessToken,
+    refreshToken,
+    accessTokenValidUntil,
+    refreshTokenValidUntil,
+  } = generateTokens(user._id);
+
+  await Session.create({
+    userId: user._id,
+    accessToken,
+    refreshToken,
+    accessTokenValidUntil,
+    refreshTokenValidUntil,
+  });
+
+  return { accessToken, refreshToken };
 };
 
-export const logoutUserService = async (sessionId) => {
-  try {
-    const session = await Session.findByIdAndDelete(sessionId);
+export const logoutUserService = async (userId) => {
+  const session = await Session.findOneAndDelete({ userId });
 
-    if (!session) {
-      throw createError(404, 'Session not found');
-    }
-
-    return session;
-  } catch (error) {
-    throw createError(500, error.message);
+  if (!session) {
+    throw createError(404, 'Session not found');
   }
+
+  return session;
+};
+
+export const refreshSessionService = async (refreshToken) => {
+  const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+  const session = await Session.findOne({
+    userId: decoded.userId,
+    refreshToken,
+  });
+
+  if (!session) {
+    throw createError(401, 'Invalid refresh token or session not found');
+  }
+
+  await Session.findOneAndDelete({ userId: decoded.userId });
+
+  const {
+    accessToken,
+    refreshToken: newRefreshToken,
+    accessTokenValidUntil,
+    refreshTokenValidUntil,
+  } = generateTokens(decoded.userId);
+
+  await Session.create({
+    userId: decoded.userId,
+    accessToken,
+    refreshToken: newRefreshToken,
+    accessTokenValidUntil,
+    refreshTokenValidUntil,
+  });
+
+  return { accessToken, refreshToken: newRefreshToken };
 };

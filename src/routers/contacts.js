@@ -19,7 +19,12 @@ const router = express.Router();
 
 router.get('/', authMiddleware, ctrlWrapper(getContacts));
 router.get('/:contactId', isValidId, ctrlWrapper(getContactById));
-router.post('/', validateBody(contactSchema), ctrlWrapper(createContact));
+router.post(
+  '/',
+  authMiddleware,
+  validateBody(contactSchema),
+  ctrlWrapper(createContact),
+);
 router.patch(
   '/:contactId',
   isValidId,
