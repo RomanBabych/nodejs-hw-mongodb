@@ -18,7 +18,12 @@ import authMiddleware from '../middlewares/authMiddleware.js';
 const router = express.Router();
 
 router.get('/', authMiddleware, ctrlWrapper(getContacts));
-router.get('/:contactId', isValidId, ctrlWrapper(getContactById));
+router.get(
+  '/:contactId',
+  authMiddleware,
+  isValidId,
+  ctrlWrapper(getContactById),
+);
 router.post(
   '/',
   authMiddleware,
@@ -27,10 +32,16 @@ router.post(
 );
 router.patch(
   '/:contactId',
+  authMiddleware,
   isValidId,
   validateBody(contactUpdateSchema),
   ctrlWrapper(updateContact),
 );
-router.delete('/:contactId', isValidId, ctrlWrapper(deleteContact));
+router.delete(
+  '/:contactId',
+  authMiddleware,
+  isValidId,
+  ctrlWrapper(deleteContact),
+);
 
 export default router;

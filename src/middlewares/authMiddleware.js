@@ -20,8 +20,6 @@ const authMiddleware = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET);
 
-    console.log('Decoded Token:', decoded);
-
     if (Date.now() >= decoded.exp * 1000) {
       return next(createError(401, 'Unauthorized: Token expired'));
     }
@@ -32,8 +30,6 @@ const authMiddleware = async (req, res, next) => {
       console.log('User not found in database');
       return next(createError(401, 'Unauthorized: User not found'));
     }
-
-    console.log('Authenticated User:', user);
 
     req.user = user;
     next();

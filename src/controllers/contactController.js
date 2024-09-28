@@ -1,11 +1,5 @@
 import createError from 'http-errors';
-import {
-  getContacts as getAllContacts,
-  getContactById as fetchContactById,
-  createContact as createNewContact,
-  updateContact as updateExistingContact,
-  deleteContact as removeContact,
-} from '../services/contacts.js';
+import Contact from '../models/contactModel.js';
 
 export const getContacts = async (req, res, next) => {
   try {
@@ -18,15 +12,20 @@ export const getContacts = async (req, res, next) => {
       isFavourite,
     } = req.query;
 
-    const result = await getAllContacts({
-      page: Number(page),
-      perPage: Number(perPage),
-      sortBy,
-      sortOrder,
-      type,
-      isFavourite,
-      userId: req.user._id,
-    });
+    const filter = { userId: req.user._id };
+
+    if (type) {
+      filter.contactType = type;
+    }
+
+    if (typeof isFavourite !== 'undefined') {
+      filter.isFavourite = isFavourite;
+    }
+
+    const result = await Contact.find(filter)
+      .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+      .skip((page - 1) * perPage)
+      .limit(Number(perPage));
 
     res.status(200).json({
       status: 200,
@@ -40,8 +39,16 @@ export const getContacts = async (req, res, next) => {
 
 export const getContactById = async (req, res, next) => {
   try {
+    if (!req.user || !req.user._id) {
+      return next(createError(401, 'Unauthorized: User not authenticated'));
+    }
+
     const { contactId } = req.params;
-    const contact = await fetchContactById(contactId, req.user._id);
+
+    const contact = await Contact.findOne({
+      _id: contactId,
+      userId: req.user._id,
+    });
 
     if (!contact) {
       return next(createError(404, 'Contact not found'));
@@ -49,25 +56,23 @@ export const getContactById = async (req, res, next) => {
 
     res.status(200).json({
       status: 200,
-      message: 'Successfully found contact!',
+      message: 'Contact found successfully!',
       data: contact,
     });
   } catch (error) {
+    console.error('Error fetching contact by ID:', error);
     next(createError(500, error.message));
   }
 };
 
 export const createContact = async (req, res, next) => {
   try {
-    const newContact = await createNewContact({
-      ...req.body,
-      userId: req.user._id,
-    });
-
+    const contact = new Contact({ ...req.body, userId: req.user._id });
+    await contact.save();
     res.status(201).json({
       status: 201,
-      message: 'Successfully created contact!',
-      data: newContact,
+      message: 'Contact created successfully!',
+      data: contact,
     });
   } catch (error) {
     next(createError(500, error.message));
@@ -77,10 +82,10 @@ export const createContact = async (req, res, next) => {
 export const updateContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const updatedContact = await updateExistingContact(
-      contactId,
+    const updatedContact = await Contact.findOneAndUpdate(
+      { _id: contactId, userId: req.user._id },
       req.body,
-      req.user._id,
+      { new: true },
     );
 
     if (!updatedContact) {
@@ -89,7 +94,7 @@ export const updateContact = async (req, res, next) => {
 
     res.status(200).json({
       status: 200,
-      message: 'Successfully updated contact!',
+      message: 'Contact updated successfully!',
       data: updatedContact,
     });
   } catch (error) {
@@ -100,13 +105,19 @@ export const updateContact = async (req, res, next) => {
 export const deleteContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await removeContact(contactId, req.user._id);
+    const deletedContact = await Contact.findOneAndDelete({
+      _id: contactId,
+      userId: req.user._id,
+    });
 
-    if (!result) {
+    if (!deletedContact) {
       return next(createError(404, 'Contact not found'));
     }
 
-    res.status(204).json();
+    res.status(200).json({
+      status: 200,
+      message: 'Contact deleted successfully!',
+    });
   } catch (error) {
     next(createError(500, error.message));
   }
