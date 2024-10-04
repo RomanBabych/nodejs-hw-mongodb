@@ -1,33 +1,28 @@
 import express from 'express';
+
 import cors from 'cors';
-import pino from 'pino';
-import expressPino from 'express-pino-logger';
-import {
-  getContacts,
-  getContactById,
-} from './controllers/contactController.js';
+
+import { env } from '../src/utils/env.js';
+import contactsRouter from './routers/contacts.js';
+import errorHandler from './midllewares/errorHandler.js';
+import notFoundHandler from './midllewares/notFoundHandler.js';
+import authRouter from './routers/auth.js';
+import cookieParser from 'cookie-parser';
 
 export function setupServer() {
   const app = express();
 
-  const logger = pino();
-  const expressLogger = expressPino({ logger });
-
   app.use(cors());
-  app.use(expressLogger);
   app.use(express.json());
+  app.use(cookieParser());
+  app.use(express.static('uploads'));
+  app.use('/auth', authRouter);
+  app.use('/contacts', contactsRouter);
 
-  app.get('/contacts', getContacts);
-  app.get('/contacts/:contactId', getContactById);
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
-  app.use((req, res) => {
-    res.status(404).json({
-      message: 'Not found',
-    });
-  });
+  const port = Number(env('PORT', 3000));
 
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+  app.listen(port, () => console.log(`Server running on port ${port}`));
 }
