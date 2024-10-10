@@ -9,7 +9,7 @@ properties:
   _id:
     description: "Contacts's id"
     type: string
-    example: 65e4decdd286b30065d54af9
+    example: 66fc414b91c47474d2fb33fa
   name:
     description: "Contacts's name"
     type: string
@@ -37,4 +37,4 @@ properties:
   photo:
     description: "Link to Contacts's photo"
     type: string
-    example: https://res.cloudinary.com/uqwgdu/image/upload/image.png
+    example: https://res.cloudinary.com/dawvwofar/image/upload/v1728063825/photo/askk05yonvkjur3sjdlq.avif

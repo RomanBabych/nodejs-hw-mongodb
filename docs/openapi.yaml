@@ -13,7 +13,7 @@ tags:
     description: Auth operations.
 servers:
   - url: http://localhost:3000
-  - url: my-rendered-web-service
+  - url: https://contacts-app-service-rn5i.onrender.com
 paths:
   /contacts:
     get:
